@@ -76,7 +76,7 @@ class BaseGame extends FlameGame with TapDetector {
 
   Future<void> initializeEnemy() async {
     enemy = Enemy(
-      type: EnemyType.angryPig,
+      type: EnemyType.bat,
       initialSize:
           Vector2.zero(), // Temporary size until onGameResize is called
       initialPosition:
