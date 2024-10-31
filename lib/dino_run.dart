@@ -1,13 +1,12 @@
 import 'dart:developer';
 import 'dart:ui';
 import 'package:flame/components.dart';
-import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/parallax.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 
-class BaseGame extends FlameGame with TapDetector{
+class DinoRun extends FlameGame {
   late double _dinoHeight;
   late double _dinoWidth;
   late double _dinoX;
@@ -25,29 +24,17 @@ class BaseGame extends FlameGame with TapDetector{
   Future<void> onLoad() async {
     super.onLoad();
     uiNotifier.addListener(() { addDino(); });
-    await addParallax();
     await addDino();// Initialize your game
-
+    onGameResize(size);
   }
 
   @override
-  void update(double dt) async{
+  void update(double dt) {
     super.update(dt);
     _speedY += gravity * dt;
     _dinoY += _speedY *dt;
-    addDino();
-    log(_dinoY.toString());
-
-    if(isOnGround()){
-      _dinoY =  _yMax;
-      _speedY = 0.0;
-      await addDino();
-    }
+    add(dino);
     // Game logic here
-  }
-
-  bool isOnGround(){
-    return (_dinoY >= _yMax);
   }
 
   @override
@@ -66,12 +53,6 @@ class BaseGame extends FlameGame with TapDetector{
     _yMax = _dinoY;
   }
 
-  @override
-  void onTapDown(TapDownInfo info) {
-    super.onTapDown(info);
-    log('Screen tapped');
-    jump();
-  }
 
   void jump(){
     _speedY = -600; // y is negative in flame engine
@@ -97,9 +78,8 @@ class BaseGame extends FlameGame with TapDetector{
     dino.animation = dinoRunAnimation;
     dino.size = Vector2(_dinoWidth, _dinoHeight);
     dino.position = Vector2(_dinoX, _dinoY);
-    add(dino);
-  }
-  Future<void> addParallax()async{
+
+    // add parallaxComponent
     final parallaxComponent = await loadParallaxComponent(
       [
         ParallaxImageData('parallax/plx-1.png'),
@@ -114,5 +94,6 @@ class BaseGame extends FlameGame with TapDetector{
       Vector2(1.1, 1.0), // Layers move at different speeds
     );
     add(parallaxComponent);
+    add(dino);
   }
 }
