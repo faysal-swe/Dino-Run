@@ -35,14 +35,13 @@ class BaseGame extends FlameGame with TapDetector{
     super.update(dt);
     _speedY += gravity * dt;
     _dinoY += _speedY *dt;
-    addDino();
     log(_dinoY.toString());
 
     if(isOnGround()){
       _dinoY =  _yMax;
       _speedY = 0.0;
-      await addDino();
     }
+    dino.position = Vector2(_dinoX, _dinoY);
     // Game logic here
   }
 
