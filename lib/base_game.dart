@@ -5,100 +5,88 @@ import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/parallax.dart';
 import 'package:flame/sprite.dart';
-import 'package:flutter/material.dart';
+import 'dino.dart';
+import 'enemy.dart';
 
-class BaseGame extends FlameGame with TapDetector{
-  late double _dinoHeight;
-  late double _dinoWidth;
-  late double _dinoX;
-  late double _dinoY;
-  final _groundHeight = 32;
+class BaseGame extends FlameGame with TapDetector {
+  final double _groundHeight = 32;
   final int _numberOfTilesAlongWidth = 10;
-  double _speedY = 0.0;
-  double _yMax = 0.0;
-  final double gravity = 1000;
-
-  final dino = SpriteAnimationComponent();
-  ValueNotifier<String> uiNotifier = ValueNotifier<String>('');
+  Dino? dino;
+  Enemy? enemy;
 
   @override
   Future<void> onLoad() async {
     super.onLoad();
-    uiNotifier.addListener(() { addDino(); });
+    await preloadImages();
     await addParallax();
-    await addDino();// Initialize your game
+    await initializeDino();
+    await initializeEnemy();
+    onGameResize(size);
+  }
 
+  Future<void> preloadImages() async {
+    await images.loadAll([
+      'Walk (36x30).png',
+      'Flying (46x30).png',
+      'Run (52x34).png',
+      'DinoSprites - tard.png',
+    ]);
   }
 
   @override
-  void update(double dt) async{
+  void update(double dt) {
     super.update(dt);
-    _speedY += gravity * dt;
-    _dinoY += _speedY *dt;
-    log(_dinoY.toString());
-
-    if(isOnGround()){
-      _dinoY =  _yMax;
-      _speedY = 0.0;
-    }
-    dino.position = Vector2(_dinoX, _dinoY);
-    // Game logic here
-  }
-
-  bool isOnGround(){
-    return (_dinoY >= _yMax);
+    dino?.applyGravity(dt);
+    enemy?.updatePositionOfX(dt);
   }
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    // Rendering logic here
   }
 
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
     log('New canvas size: $size');
-    _dinoHeight = _dinoWidth = size.x / _numberOfTilesAlongWidth;
-    _dinoX = _dinoWidth;
-    _dinoY = size.y - _groundHeight - _dinoHeight - 10;
-    _yMax = _dinoY;
+    dino?.resize(size, _groundHeight, _numberOfTilesAlongWidth);
+    enemy?.resize(size, _groundHeight, _numberOfTilesAlongWidth);
   }
 
   @override
   void onTapDown(TapDownInfo info) {
     super.onTapDown(info);
     log('Screen tapped');
-    jump();
+    dino?.jump(-600); // y is negative in flame engine
   }
 
-  void jump(){
-    _speedY = -600; // y is negative in flame engine
-  }
-
-  Future<void> addDino() async {
+  Future<void> initializeDino() async {
     final spriteSheet = SpriteSheet(
       image: await images.load('DinoSprites - tard.png'),
       srcSize: Vector2(24, 24),
     );
-    final dinoRunAnimation = spriteSheet.createAnimation(
-      row: 0,
-      from: 4,
-      to: 10,
-      stepTime: 0.1,
+    dino = Dino(
+      size: Vector2.zero(), // Temporary size until onGameResize is called
+      position:
+          Vector2.zero(), // Temporary position until onGameResize is called
+      spriteSheet: spriteSheet,
     );
-    final dinoHitAnimation = spriteSheet.createAnimation(
-      row: 0,
-      from: 14,
-      to: 16,
-      stepTime: 0.1,
-    );
-    dino.animation = dinoRunAnimation;
-    dino.size = Vector2(_dinoWidth, _dinoHeight);
-    dino.position = Vector2(_dinoX, _dinoY);
-    add(dino);
+    add(dino!);
   }
-  Future<void> addParallax()async{
+
+  Future<void> initializeEnemy() async {
+    enemy = Enemy(
+      type: EnemyType.angryPig,
+      initialSize:
+          Vector2.zero(), // Temporary size until onGameResize is called
+      initialPosition:
+          Vector2.zero(), // Temporary position until onGameResize is called
+    );
+
+    add(enemy!);
+  }
+
+  Future<void> addParallax() async {
     final parallaxComponent = await loadParallaxComponent(
       [
         ParallaxImageData('parallax/plx-1.png'),
@@ -110,7 +98,7 @@ class BaseGame extends FlameGame with TapDetector{
       ],
       baseVelocity: Vector2(100, 0), // Controls the scrolling speed
       velocityMultiplierDelta:
-      Vector2(1.1, 1.0), // Layers move at different speeds
+          Vector2(1.1, 1.0), // Layers move at different speeds
     );
     add(parallaxComponent);
   }
