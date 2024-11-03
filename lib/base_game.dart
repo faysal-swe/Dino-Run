@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'dart:ui';
+import 'package:dino_run/enamy_manager.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -13,6 +14,10 @@ class BaseGame extends FlameGame with TapDetector {
   final int _numberOfTilesAlongWidth = 10;
   Dino? dino;
   Enemy? enemy;
+  int _score = 0;
+  late TextComponent _scoreText;
+  late double sizeOfx;
+  late EnemyManager _enemyManager;
 
   @override
   Future<void> onLoad() async {
@@ -38,6 +43,8 @@ class BaseGame extends FlameGame with TapDetector {
     super.update(dt);
     dino?.applyGravity(dt);
     enemy?.updatePositionOfX(dt);
+    _score += (60 * dt).toInt();
+    _scoreText.text = _score.toString();
   }
 
   @override
@@ -51,13 +58,14 @@ class BaseGame extends FlameGame with TapDetector {
     log('New canvas size: $size');
     dino?.resize(size, _groundHeight, _numberOfTilesAlongWidth);
     enemy?.resize(size, _groundHeight, _numberOfTilesAlongWidth);
+    sizeOfx = size.x / 2;
   }
 
   @override
   void onTapDown(TapDownInfo info) {
     super.onTapDown(info);
     log('Screen tapped');
-    dino?.jump(-600); // y is negative in flame engine
+    dino?.jump(-500); // y is negative in flame engine
   }
 
   Future<void> initializeDino() async {
@@ -75,15 +83,18 @@ class BaseGame extends FlameGame with TapDetector {
   }
 
   Future<void> initializeEnemy() async {
-    enemy = Enemy(
-      type: EnemyType.bat,
-      initialSize:
-          Vector2.zero(), // Temporary size until onGameResize is called
-      initialPosition:
-          Vector2.zero(), // Temporary position until onGameResize is called
-    );
+    // enemy = Enemy(
+    //   type: EnemyType.rino,
+    //   initialSize:
+    //       Vector2.zero(), // Temporary size until onGameResize is called
+    //   initialPosition:
+    //       Vector2.zero(), // Temporary position until onGameResize is called
+    // );
 
-    add(enemy!);
+    _enemyManager = EnemyManager();
+
+    await add(_enemyManager);
+
   }
 
   Future<void> addParallax() async {
@@ -101,5 +112,8 @@ class BaseGame extends FlameGame with TapDetector {
           Vector2(1.1, 1.0), // Layers move at different speeds
     );
     add(parallaxComponent);
+    _scoreText = TextComponent(text: _score.toString());
+    _scoreText.position = Vector2(sizeOfx, 10);
+    add(_scoreText);
   }
 }
